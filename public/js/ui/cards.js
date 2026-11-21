@@ -109,18 +109,15 @@ const use = (id, cls = '', style = '') => `<svg class="${cls}" ${style ? `style=
 export function cardHTML(c, extra = '') {
   if (!c) return '';
   if (c.back) return `<div class="card back ${extra}"></div>`;
+  // Cartes réalistes: Vectorized Playing Cards 1.3 (Chris Aguilar, LGPL-3, voir img/cards/),
+  // joker dessiné pour Rami l Sbah.
   if (isJoker(c)) {
     const as = c.as ? `<span class="as ${RED[c.as.s] ? 'red' : ''}">${rankLabel(c.as.r)}${suitChar(c.as.s)}</span>` : '';
-    return `<div class="card joker ${extra}" data-id="${c.id}"><div class="ix tl"><b>JOKER</b></div>${use('joker-art', 'jart')}<div class="ix br"><b>JOKER</b></div>${as}</div>`;
+    return `<div class="card real joker ${extra}" data-id="${c.id}"><img src="img/cards/JOKER.svg" alt="Joker" draggable="false">${as}</div>`;
   }
   const red = RED[c.s] ? 'red' : '';
-  const lab = rankLabel(c.r);
-  const ix = pos => `<div class="ix ${pos}"><b>${lab}</b>${use('suit-' + c.s)}</div>`;
-  let center;
-  if (c.r >= 11) center = `<div class="court">${use(`court-${c.r}-${red ? 'r' : 'b'}`)}${use('suit-' + c.s, 'cs')}</div>`;
-  else if (c.r === 1) center = `<div class="pips ace">${use('suit-' + c.s, 'p', 'left:50%;top:50%')}</div>`;
-  else center = `<div class="pips ${c.r >= 9 ? 'dense' : ''}">${PIPS[c.r].map(([x, y]) => use('suit-' + c.s, y > 50 ? 'p flip' : 'p', `left:${x}%;top:${y}%`)).join('')}</div>`;
-  return `<div class="card ${red} ${extra}" data-id="${c.id}">${ix('tl')}${center}${ix('br')}</div>`;
+  const f = ({ 1: 'A', 10: 'T', 11: 'J', 12: 'Q', 13: 'K' }[c.r] || c.r) + c.s;
+  return `<div class="card real ${red} ${extra}" data-id="${c.id}"><img src="img/cards/${f}.svg" alt="${rankLabel(c.r)}${suitChar(c.s)}" draggable="false"></div>`;
 }
 
 export const suitChar = s => ({ S: '♠', H: '♥', D: '♦', C: '♣' }[s] || '');

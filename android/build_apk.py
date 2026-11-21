@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(HERE, "tools"))
 import apkbin
 from apkbin import Elem, T_INT, T_STRING, T_BOOL, T_REF, ANDROID_NS
 
-PKG, LABEL, VC, VN = "com.limem.ramitounsi", "Rami Tounsi", 8, "2.6"
+PKG, LABEL, VC, VN = "com.limem.ramitounsi", "Rami Tounsi", 10, "2.8"
 JARS, OUT = sys.argv[1], os.path.abspath(sys.argv[2])
 
 

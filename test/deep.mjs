@@ -3,10 +3,39 @@ import assert from 'node:assert/strict';
 import { Round, RuleError } from '../public/js/core/game.js';
 import { Table } from '../public/js/core/table.js';
 import { botAction, autoAction } from '../public/js/core/bot.js';
-import { validateMeld } from '../public/js/core/rules.js';
+import { validateMeld, meldProblem } from '../public/js/core/rules.js';
 
 const total = g => g.stock.length + g.discard.length + Object.values(g.hands).reduce((s, h) => s + h.length, 0) + g.melds.reduce((s, m) => s + m.cards.length, 0);
 const P3 = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+
+// 0) a set of two different suits + a joker (2♠ 2♣ JK) is a valid meld, in any order
+{
+  const c = (r, s, id) => ({ id: id || 'x' + r + s, r, s });
+  const JK = { id: 'xJK', r: 0, s: 'J' };
+  const two = [c(2, 'S'), c(2, 'C')];
+  for (const order of [[...two, JK], [JK, ...two], [two[0], JK, two[1]]]) {
+    const m = validateMeld(order);
+    assert.equal(m && m.kind, 'set');
+    assert.equal(m.points, 6);
+    assert.ok(m.cards.find(x => x.s === 'J').as.s === 'H' || m.cards.find(x => x.s === 'J').as.s === 'D');
+  }
+  for (const r of [1, 7, 11, 12, 13]) assert.equal(validateMeld([c(r, 'H'), c(r, 'D'), JK]).kind, 'set');
+  assert.equal(validateMeld([c(2, 'S'), c(2, 'S', 'x2Sb'), JK]), null); // same suit twice
+  // and it can really be laid down by a player who already opened
+  const g = new Round({ players: P3, seed: 5, starter: 0 });
+  g.act('a', { type: 'decide', play: true });
+  g.opened.a = true;
+  g.hands.a.push(c(2, 'S'), c(2, 'C'), { ...JK });
+  const ev = g.act('a', { type: 'meld', groups: [['x2S', 'xJK', 'x2C']] });
+  assert.equal(ev.type, 'meld');
+  assert.equal(ev.melds[0].kind, 'set');
+  assert.equal(meldProblem([c(10, 'H'), c(10, 'C'), c(10, 'D')]), null);
+  assert.equal(meldProblem([c(10, 'H'), c(10, 'H', 'b'), c(10, 'D')]), 'why.sameSuit');
+  assert.equal(meldProblem([c(10, 'H'), c(10, 'C'), c(10, 'D'), c(11, 'C')]), 'why.mixed');
+  assert.equal(meldProblem([c(4, 'H'), c(6, 'H'), c(9, 'H')]), 'why.gap');
+  assert.equal(meldProblem([c(4, 'H'), JK, { ...JK, id: 'j2' }]), 'why.jokers');
+  console.log('set with joker ok');
+}
 
 // 1) taking the discard and putting it back = +50
 {

@@ -59,7 +59,7 @@ Fel APK, Google ma y5allich el connexion men WebView: el application tab9a invit
 
 ## L'application Android (APK)
 
-`Rami-Tounsi.apk` (Android 7+, v2.6). Contre l'ordi yemchi direct bla internet. Fih micro (vocal w tsajjel el klem), ikhtiar mousi9a men telifounek, w voix arabe (synthèse Android).
+`Rami-Tounsi.apk` (Android 7+, v2.8). Contre l'ordi yemchi direct bla internet. Fih micro (vocal w tsajjel el klem), ikhtiar mousi9a men telifounek, w voix arabe (synthèse Android).
 Lel online: ftah ⚙️ Réglages fil application w 7ott adresse el serveur (el lien mta3 Render).
 Wala 7ottha marra wa7da fi `public/config.js` (`window.RAMI_SERVER = 'https://...'`) w 3awed ebni el APK:
 
@@ -88,3 +88,7 @@ server/accounts.js        classement + sauvegarde Gmail (JSON fi DATA_DIR)
 ```
 
 Nafs el moteur yekhdem fil serveur (online) w fil navigateur (contre l'ordi).
+
+## Crédits cartes
+
+Les cartes (As → Roi) viennent de **Vectorized Playing Cards 1.3** © Chris Aguilar, sous licence **LGPL-3.0** (`public/img/cards/COPYING*.txt`, `AUTHORS.txt`). Les fichiers SVG sont gardés séparés, donc on peut les remplacer à tout moment. Le Joker (`JOKER.svg`) est un dessin original du projet.

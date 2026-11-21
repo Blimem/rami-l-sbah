@@ -1,6 +1,6 @@
 // Rami Tounsi — UI controller.
-import { validateMeld, isJoker, sortBySuit, sortByRank, isCleanRun, rankLabel } from '../core/rules.js';
-import { cardHTML, el, LOGO } from './cards.js';
+import { validateMeld, meldProblem, isJoker, sortBySuit, sortByRank, isCleanRun, rankLabel } from '../core/rules.js';
+import { cardHTML, el, LOGO, cardText } from './cards.js';
 import { sfx, buzz, sound } from './sound.js';
 import { OnlineNet, LocalNet } from './net.js';
 import { t, lang, setLang, LANGS, applyI18n, quickLines, meldName } from './i18n.js';
@@ -494,6 +494,7 @@ function settingsDialog(focus) {
         <div class="row between"><span>${t('set.linesOn')}</span><button type="button" class="switch ${voicelines.on ? 'on' : ''}" data-lines-on></button></div>
         ${lineRows}
       </section>
+      <p class="muted small credits">🂡 Vectorized Playing Cards 1.3 © Chris Aguilar · <a href="img/cards/COPYING.LESSER.txt" target="_blank" rel="noopener">LGPL-3</a> · Joker: Rami l Sbah</p>
       <section id="sec-server"><h4>🛰️ ${t('set.server')}</h4>
         <p class="muted small">${t('set.serverHint')}</p>
         <form class="row" id="sf"><input class="input" name="url" placeholder="https://…" value="${esc(cur)}" style="flex:1"><button class="btn gold">${t('save')}</button></form>
@@ -861,7 +862,7 @@ function renderMe() {
     opening = `<div class="opening ${pts >= g.openMin && clean ? 'ok' : ''}"><span>${t('opening')}</span><div class="bar" style="--p:${p}"><i></i></div><b>${pts}</b>/${g.openMin}${g.cleanRun ? `<span class="chip ${clean ? 'okc' : ''}" title="${t('clean.tip')}">${clean ? '✓' : '✗'} ${t('clean.short')}</span>` : ''}</div>`;
   }
   let hint = '';
-  if (selCards.length >= 3) hint = meld ? `<span class="hint ok">✓ ${esc(meldName(meld))} · ${meld.points} ${t('pts')}</span>` : `<span class="hint bad">${t('hint.notMeld')}</span>`;
+  if (selCards.length >= 3) hint = meld ? `<span class="hint ok">✓ ${esc(meldName(meld))} · ${meld.points} ${t('pts')}</span>` : `<span class="hint bad" title="${esc(selCards.map(cardText).join(' '))}">${t('hint.notMeld')} (${selCards.length}) · ${t(meldProblem(selCards))}</span>`;
   else if (selCards.length && mine && g.phase === 'play' && opened && selectionTargets().size) hint = `<span class="hint ok">${t('hint.dropGold')}</span>`;
 
   const play = mine && g.phase === 'play';
@@ -900,8 +901,12 @@ function renderHand() {
   for (const id of ids) {
     const c = cardById(id);
     if (!c) continue;
+    // ids are reshuffled on every deal (redeal / new round): only reuse a node
+    // that still shows the same card, otherwise the hand would show stale faces
+    const face = isJoker(c) ? 'JK' : c.r + c.s;
     let n = existing.get(id);
-    if (!n) n = el(cardHTML(c));
+    if (n && n.dataset.face !== face) n = null;
+    if (!n) { n = el(cardHTML(c)); n.dataset.face = face; }
     n.classList.toggle('sel', S.sel.has(id));
     n.classList.toggle('must', g.mustUse === id);
     n.dataset.must = t('mustTag');

@@ -154,3 +154,21 @@ export function sortByRank(cards) {
   const so = { S: 0, H: 1, C: 2, D: 3, J: 4 };
   return [...cards].sort((a, b) => (isJoker(a) - isJoker(b)) || a.r - b.r || so[a.s] - so[b.s]);
 }
+
+/** Why a selection is not a meld (i18n key), or null if it is one. */
+export function meldProblem(cards) {
+  if (!cards || cards.length < 3) return 'why.min3';
+  if (validateMeld(cards)) return null;
+  const nat = cards.filter(c => !isJoker(c));
+  const jk = cards.length - nat.length;
+  if (nat.length < 2 || jk >= nat.length) return 'why.jokers';
+  if (nat.every(c => c.r === nat[0].r)) {
+    if (cards.length > 4) return 'why.set4';
+    return 'why.sameSuit';
+  }
+  if (nat.every(c => c.s === nat[0].s)) {
+    if (new Set(nat.map(c => c.r)).size !== nat.length) return 'why.dupRank';
+    return 'why.gap';
+  }
+  return 'why.mixed';
+}
