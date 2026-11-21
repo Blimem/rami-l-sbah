@@ -165,7 +165,10 @@ export class Round {
     this.taken = null;
     this.mustUse = null;
     this.phase = 'draw';
-    return this.push({ type: 'undoDraw', player: id, card });
+    // taking the discard and putting it back costs a penalty
+    const pts = this.opts.returnPenalty || 0;
+    if (pts) this.penalize(id, pts, 'n.returned');
+    return this.push({ type: 'undoDraw', player: id, card, penalty: pts });
   }
 
   ensurePlay() {
@@ -293,6 +296,7 @@ export class Round {
       canUndo: this.current === id && !!this.mustUse,
       openMin: this.opts.openMin,
       cleanRun: this.opts.cleanRun,
+      returnPenalty: this.opts.returnPenalty || 0,
       starter: this.players[this.starter],
       accepted: this.accepted,
       redeals: this.redeals,

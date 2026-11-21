@@ -13,6 +13,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export const clampLimit = v => { v = Math.round(Number(v) || 0); return v <= 0 ? 0 : Math.min(10000, Math.max(100, v)); };
 export const clampOpen = v => Math.min(201, Math.max(21, Math.round(Number(v) || 71)));
 const MAX_ROUNDS = 60;
+const cleanLevel = l => (['easy', 'normal', 'pro'].includes(l) ? l : 'normal');
 // Rebuy ("tgaji"): who gets the offer when knocked out. 'first' = only the first player knocked out, once.
 export const REBUY = 'first';
 
@@ -25,9 +26,9 @@ export class Table {
     this.rounds = Math.min(9, Math.max(1, rounds | 0));
     this.limit = clampLimit(limit);
     this.openMin = clampOpen(openMin);
-    this.turnTime = turnTime | 0;
+    this.turnTime = Math.min(120, Math.max(0, turnTime | 0));
     this.isPublic = !!isPublic;
-    this.botLevel = botLevel;
+    this.botLevel = cleanLevel(botLevel);
     this.emit = emit;
     this.clock = clock || { now: () => Date.now(), set: (f, ms) => setTimeout(f, ms), clear: t => clearTimeout(t) };
     this.seats = [];
@@ -115,7 +116,7 @@ export class Table {
     if (this.seats.length >= this.maxPlayers) throw new RuleError('e.full');
     const used = new Set(this.seats.map(s => s.name));
     const name = BOT_NAMES.find(n => !used.has(n)) || 'Bot';
-    this.seats.push({ id: 'bot-' + uid(), name, avatar: BOT_AVATARS.find(a => !this.seats.some(x => x.avatar === a)) || '🤖', bot: true, level: level || this.botLevel, connected: true, score: 0 });
+    this.seats.push({ id: 'bot-' + uid(), name, avatar: BOT_AVATARS.find(a => !this.seats.some(x => x.avatar === a)) || '🤖', bot: true, level: level ? cleanLevel(level) : this.botLevel, connected: true, score: 0 });
     this.broadcast();
   }
 
@@ -135,7 +136,7 @@ export class Table {
     if (o.openMin !== undefined) this.openMin = clampOpen(o.openMin);
     if (o.turnTime !== undefined) this.turnTime = Math.min(120, Math.max(0, o.turnTime | 0));
     if (o.maxPlayers) this.maxPlayers = Math.max(this.seats.length, Math.min(4, Math.max(2, o.maxPlayers | 0)));
-    if (o.botLevel) this.botLevel = o.botLevel;
+    if (o.botLevel) this.botLevel = cleanLevel(o.botLevel);
     this.broadcast();
   }
 

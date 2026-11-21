@@ -26,36 +26,39 @@
       <button class="profile-chip" id="profile-chip"></button>
     </header>
     <main class="home">
-      <section class="hero panel">
+      <section class="hero panel slim">
         <div>
           <div class="eyebrow" data-i18n="home.eyebrow"></div>
           <h1>Rami <span>Tounsi</span><span class="ar">رامي تونسي</span></h1>
           <p data-i18n="home.tagline"></p>
-          <div class="cta">
-            <button class="btn gold lg" id="btn-hero-online" data-i18n="home.create"></button>
-            <button class="btn lg" id="btn-hero-solo" data-i18n="home.solo"></button>
-          </div>
-          <div class="stats"><div><b>2–4</b><span data-i18n="home.players"></span></div><div><b>71</b><span data-i18n="home.opening"></span></div><div><b>108</b><span data-i18n="home.cards"></span></div></div>
         </div>
-        <div class="fan" id="fan" aria-hidden="true"></div>
+        <div class="stats"><div><b>2–4</b><span data-i18n="home.players"></span></div><div><b>71</b><span data-i18n="home.opening"></span></div><div><b>108</b><span data-i18n="home.cards"></span></div></div>
       </section>
-      <div class="grid-2">
-        <section class="panel">
-          <div class="section-head"><h2 data-i18n="home.tables"></h2><div class="spacer"></div><button class="btn sm gold" id="btn-create" data-i18n="home.newTable"></button></div>
-          <form class="joinbox" id="join-form" style="padding:6px 14px 0"><input class="input" id="join-code" maxlength="6" placeholder="CODE" autocomplete="off"><button class="btn" data-i18n="home.join"></button></form>
-          <div class="rooms" id="rooms"></div>
+      <div class="modes">
+        <section class="panel mode">
+          <div class="mode-head"><span class="mode-ic">👥</span><div><h2 data-i18n="home.friends"></h2><small data-i18n="home.friendsSub"></small></div></div>
+          <button class="btn gold wide" id="btn-create" data-i18n="home.createTable"></button>
+          <form class="joinbox" id="join-form"><input class="input" id="join-code" maxlength="6" placeholder="CODE" autocomplete="off"><button class="btn" data-i18n="home.join"></button></form>
         </section>
-        <aside class="side">
-          <section class="panel">
-            <div class="section-head"><h2 data-i18n="home.soloTitle"></h2><div class="spacer"></div><span class="chip">Offline</span></div>
-            <div class="form"><div id="solo-form" class="settings"></div><button class="btn gold lg" id="btn-solo" data-i18n="home.playNow"></button></div>
-          </section>
-          <section class="panel" style="padding:18px 22px">
-            <div class="eyebrow" style="margin-bottom:8px" data-i18n="home.tip"></div>
-            <div class="muted" style="line-height:1.55" data-i18n="home.tipText"></div>
-          </section>
-        </aside>
+        <section class="panel mode">
+          <div class="mode-head"><span class="mode-ic">🤖</span><div><h2 data-i18n="home.training"></h2><small data-i18n="home.trainingSub"></small></div><div class="spacer"></div><span class="chip">Offline</span></div>
+          <div class="train-btns"><button class="btn violet" data-train="1">🤖 <span data-i18n="home.vs1"></span></button><button class="btn violet" data-train="3">👥 <span data-i18n="home.four"></span></button></div>
+          <div class="eyebrow small-eyebrow" data-i18n="botLevel"></div>
+          <div id="train-level"></div>
+          <details class="train-more"><summary data-i18n="home.matchSettings"></summary><div id="solo-form" class="settings"></div></details>
+        </section>
+        <section class="panel mode online-mode">
+          <div class="om-main">
+            <span class="chip" data-i18n="home.onlineChip"></span>
+            <h2 class="om-title" data-i18n="home.online"></h2>
+            <p class="muted" data-i18n="home.onlineSub"></p>
+            <span class="chip off" data-status>…</span>
+          </div>
+          <div class="om-side"><div class="fan" id="fan" aria-hidden="true"></div><button class="btn gold lg play-btn" id="btn-quick">⚡ <span data-i18n="home.play"></span></button></div>
+          <div class="om-rooms"><div class="eyebrow small-eyebrow" data-i18n="home.tables"></div><div class="rooms" id="rooms"></div></div>
+        </section>
       </div>
+      <section class="panel tip"><div class="eyebrow" data-i18n="home.tip"></div><div class="muted" data-i18n="home.tipText"></div></section>
     </main>
   </section>
 

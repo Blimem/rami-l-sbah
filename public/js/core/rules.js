@@ -13,7 +13,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
   closedPenalty: 100, // ma hbattech jemla
   cleanRun: true,     // l'ouverture lazemha suite sans joker
   badOpenPenalty: 50, // ouverture bla suite sans joker
-  feedPenalty: 50,    // rmit el carta elli biha el o5er farrach
+  feedPenalty: 50, returnPenalty: 50,    // rmit el carta elli biha el o5er farrach
   frich: true,        // elli yebda y9oul "nal3bou wala le?"
   acceptPenalty: 50,  // 9al nal3bou w ma 7allech
 });

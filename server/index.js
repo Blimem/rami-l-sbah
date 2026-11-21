@@ -95,7 +95,8 @@ function joinTable(pid, t) {
 
 const handlers = {
   hello(ws, m) {
-    let pid = m.token && tokens.get(m.token);
+    if (ws.pid) return;  // one identity per socket
+    let pid = typeof m.token === 'string' && tokens.get(m.token);
     let token = m.token;
     if (!pid) {
       pid = 'u_' + crypto.randomBytes(6).toString('hex');
@@ -172,19 +173,21 @@ const tableCmds = {
 
 wss.on('connection', ws => {
   ws.isAlive = true;
+  ws.on('error', () => {});  // e.g. oversize payload: drop this socket, never crash the server
   let budget = 60;
   const refill = setInterval(() => { budget = Math.min(60, budget + 20); }, 1000);
   ws.on('pong', () => { ws.isAlive = true; });
   ws.on('message', raw => {
-    if (--budget < 0) return;  // flood protection
+    if (budget <= 0) return;  // flood protection (drop, but never go deep negative)
+    budget--;
     let m;
     try { m = JSON.parse(raw); } catch { return; }
     if (!m || typeof m.type !== 'string') return;
     try {
       if (m.type === 'ping') return send(ws, { type: 'pong', t: m.t });
       if (m.type !== 'hello' && !ws.pid) return;
-      if (handlers[m.type]) handlers[m.type](ws, m);
-      else if (tableCmds[m.type]) {
+      if (Object.hasOwn(handlers, m.type)) handlers[m.type](ws, m);
+      else if (Object.hasOwn(tableCmds, m.type)) {
         const c = clients.get(ws.pid);
         const t = c && c.table && tables.get(c.table);
         if (!t) throw new RuleError('e.notAtTable');
@@ -207,7 +210,7 @@ wss.on('connection', ws => {
     // give them 2 minutes to come back, then free the seat
     setTimeout(() => {
       const cc = clients.get(ws.pid);
-      if (cc && !cc.ws) { leaveTable(ws.pid); clients.delete(ws.pid); pushLobby(); }
+      if (cc && !cc.ws) { leaveTable(ws.pid); clients.delete(ws.pid); for (const [tk, p] of tokens) if (p === ws.pid) tokens.delete(tk); pushLobby(); }
     }, 120000);
     pushLobby();
   });

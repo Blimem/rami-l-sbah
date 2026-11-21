@@ -230,9 +230,8 @@ function onTable(m) {
 
 // ---------------- home ----------------
 function bindHome() {
-  $('#btn-solo').onclick = () => startSolo();
-  $('#btn-hero-solo').onclick = () => startSolo();
-  $('#btn-hero-online').onclick = () => createTableDialog();
+  $$('[data-train]').forEach(b => { b.onclick = () => { S.solo.bots = +b.dataset.train; localStorage.setItem('rami.solo', JSON.stringify(S.solo)); startSolo(); }; });
+  $('#btn-quick').onclick = quickPlay;
   $('#btn-create').onclick = () => createTableDialog();
   $$('[data-rules]').forEach(b => { b.onclick = showRules; });
   $$('[data-settings]').forEach(b => { b.onclick = () => settingsDialog(); });
@@ -313,11 +312,11 @@ const levelOpts = () => [['easy', levelName('easy')], ['normal', levelName('norm
 
 // ---- match setup: players, end of match (score limit or rounds), opening points ----
 const LIMITS = [300, 500, 1000, 1500], OPENS = [51, 71, 81, 101];
-function matchRowsHTML(o, playersKey) {
+function matchRowsHTML(o, playersKey, noPlayers = false) {
   const byScore = o.limit > 0;
   const lim = byScore ? o.limit : 500;
   return `
-    <div class="row between"><span>${t('players')}</span>${segHTML(playersKey, [[2, '2'], [3, '3'], [4, '4']], o.players)}</div>
+    ${noPlayers ? '' : `<div class="row between"><span>${t('players')}</span>${segHTML(playersKey, [[2, '2'], [3, '3'], [4, '4']], o.players)}</div>`}
     <div class="row between"><span>${t('create.mode')}</span>${segHTML('mode', [['score', t('mode.score')], ['rounds', t('mode.rounds')]], byScore ? 'score' : 'rounds')}</div>
     <div class="row between mrow" data-show="score" ${byScore ? '' : 'hidden'}><span>${t('create.limit')}</span>
       <div class="numbox"><input class="input num" type="number" inputmode="numeric" min="100" max="10000" step="50" data-num="limit" value="${lim}">
@@ -379,8 +378,12 @@ function renderSolo() {
   const so = S.solo;
   if (so.limit === undefined) so.limit = 500;
   if (!so.openMin) so.openMin = 71;
-  box.innerHTML = matchRowsHTML({ players: so.bots + 1, limit: so.limit, rounds: so.rounds, openMin: so.openMin }, 'players') + `
-    <div class="row between"><span>${t('level')}</span>${segHTML('level', levelOpts(), so.level)}</div>`;
+  box.innerHTML = matchRowsHTML({ players: so.bots + 1, limit: so.limit, rounds: so.rounds, openMin: so.openMin }, 'players', true);
+  const lv = $('#train-level');
+  if (lv) {
+    lv.innerHTML = segHTML('level', [['easy', '🙂 ' + levelName('easy')], ['normal', '😏 ' + levelName('normal')], ['pro', '🔥 ' + levelName('pro')]], so.level);
+    bindSegs(lv, (k, v) => { so.level = v; localStorage.setItem('rami.solo', JSON.stringify(so)); });
+  }
   bindMatchRows(box, (k, v) => {
     if (k === 'players') so.bots = v - 1; else so[k] = v;
     localStorage.setItem('rami.solo', JSON.stringify(so));
@@ -393,6 +396,14 @@ function startSolo() {
   if (S.net && S.net.kind === 'local') S.net.close();
   S.roundSeen = 0; S.resultsShown = ''; S.chat = [];
   S.net = new LocalNet(S.profile, S.solo, m => onMessage(m, 'local'));
+}
+
+/** Online quick play: join an open public table, or open one with the usual settings. */
+function quickPlay() {
+  if (!requireOnline()) return;
+  const open = S.rooms.find(r => r.state === 'waiting' && r.players < r.maxPlayers);
+  if (open) { S.online.send('join', { id: open.id }); return; }
+  S.online.send('create', { name: t('create.defaultName', { name: S.profile.name }), maxPlayers: 4, limit: 500, openMin: 71, turnTime: 40, isPublic: true });
 }
 
 function createTableDialog() {
@@ -711,9 +722,36 @@ function renderGame() {
   renderPods();
   renderMelds();
   renderPiles();
+  renderDecide();
   renderMe();
   renderHand();
   refreshVoiceUI();
+}
+
+/** "Happy with your cards?" panel on the felt while players decide. */
+function renderDecide() {
+  const g = S.game, tb = S.table;
+  let pop = $('#decide-pop');
+  if (g.phase !== 'decide' || tb.state !== 'playing') { if (pop) pop.remove(); return; }
+  if (!pop) { pop = el('<div class="decide-pop" id="decide-pop"></div>'); $('.felt').append(pop); }
+  const mine = isMyTurn();
+  const order = tb.seats.filter(s => !s.out);
+  const ring = order.map(s => {
+    const st = (g.passed || []).includes(s.id) ? 'no' : g.turn === s.id ? 'now' : '';
+    return `<span class="dp-av ${st}" title="${esc(s.name)}">${avatar(s.avatar, seatColor(s.id))}${st === 'no' ? '<i>✕</i>' : ''}</span>`;
+  }).join('');
+  const n = g.hand.length;
+  pop.innerHTML = `<div class="dp-ribbon">⟲ ${t('decide.banner')}</div>
+    <h3>${mine ? t('decide.happy') : t('decide.waiting', { name: esc(seatOf(g.turn).name) })}</h3>
+    <p class="muted">${mine ? t('decide.look', { n }) : t('decide.othersHint')}</p>
+    <div class="dp-ring">${ring}</div>
+    ${mine ? `<div class="dp-btns">
+      <button class="btn blue lg" data-dp="no"><b>⟲ ${t('decide.redealBtn')}</b><small>${t('decide.redealSub')}</small></button>
+      <button class="btn gold lg" data-dp="yes"><b>▶ ${t('decide.keepBtn')}</b><small>${t('decide.keepSub')}</small></button>
+    </div>
+    <div class="dp-warn">⚠ ${t('decide.warn', { n: 50 })}</div>
+    ${canQuickDiscard() ? `<div class="muted small">${t('decide.orThrow')}</div>` : ''}` : ''}`;
+  $$('[data-dp]', pop).forEach(b => { b.onclick = () => act({ type: 'decide', play: b.dataset.dp === 'yes' }); });
 }
 
 function opponents() {
@@ -809,7 +847,7 @@ function renderMe() {
   const iAmOut = !!seatOf(me()).out;
   if (S.table.state !== 'playing') status = `<div class="status">${t('st.roundOver')}</div>`;
   else if (iAmOut) status = `<div class="status out">👁 ${t('out.me', { n: S.table.limit })}</div>`;
-  else if (g.phase === 'decide') status = mine ? `<div class="status mine"><span class="dot"></span><span>${t('decide.ask')}${canQuickDiscard() ? ` <small class="muted">${t('decide.orThrow')}</small>` : ''}</span></div>` : `<div class="status"><span class="dot"></span>${t('decide.waiting', { name: esc(seatOf(g.turn).name) })}</div>`;
+  else if (g.phase === 'decide') status = mine ? `<div class="status mine"><span class="dot"></span><span>${t('decide.ask')}</span></div>` : `<div class="status"><span class="dot"></span>${t('decide.waiting', { name: esc(seatOf(g.turn).name) })}</div>`;
   else if (!mine) status = `<div class="status"><span class="dot"></span>${t('st.turnOf', { name: esc(seatOf(g.turn).name) })}</div>`;
   else if (g.phase === 'draw') status = `<div class="status mine"><span class="dot"></span>${t('st.draw')}</div>`;
   else if (g.mustUse) status = `<div class="status mine"><span class="dot"></span>${t('st.mustUse')}</div>`;
@@ -830,8 +868,6 @@ function renderMe() {
   const stagedTotal = stagedPoints();
   const acts = [];
   if (mine && g.phase === 'decide') {
-    acts.push(`<button class="btn gold" data-a="decide-yes">✓ ${t('decide.yes')}</button>`);
-    acts.push(`<button class="btn" data-a="decide-no">↺ ${t('decide.no')}</button>`);
     if (canQuickDiscard()) acts.push(`<button class="btn blue" data-a="discard" ${selCards.length === 1 ? '' : 'disabled'}>${t('act.discard')} ▸</button>`);
   }
   if (play) {
@@ -842,12 +878,12 @@ function renderMe() {
       acts.push(`<button class="btn ${meld ? 'gold' : ''}" data-a="meld" ${meld ? '' : 'disabled'}>${t('act.meld')}</button>`);
     }
     acts.push(`<button class="btn blue" data-a="discard" ${selCards.length === 1 && !g.mustUse ? '' : 'disabled'}>${t('act.discard')} ▸</button>`);
-    if (g.canUndo) acts.push(`<button class="btn ghost" data-a="undo">↩ ${t('act.undo')}</button>`);
+    if (g.canUndo) acts.push(`<button class="btn ghost" data-a="undo">↩ ${g.returnPenalty ? t('act.undoPen', { n: g.returnPenalty }) : t('act.undo')}</button>`);
   }
   if (S.sel.size) acts.push(`<button class="btn ghost sm" data-a="clear">${t('act.clear')}</button>`);
   $('#me-bar').innerHTML = `<div id="me-pod">${podHTML(seatOf(me()), true)}</div>${status}${opening}${hint}<div class="spacer"></div>
     <div class="actions">${acts.join('')}
-      <div class="seg" title="${t('sort')}">${['suit', 'rank'].map(k => `<button data-sort="${k}" class="${S.sortMode === k ? 'on' : ''}">${k === 'suit' ? '♠♥' : '7·7'}</button>`).join('')}</div></div>`;
+      <div class="seg sortseg" title="${t('sort')}"><span class="lbl">${t('sort.label')}</span>${['rank', 'suit'].map(k => `<button data-sort="${k}" class="${S.sortMode === k ? 'on' : ''}">${k === 'suit' ? '♠♥ ' + t('sort.suit') : '⇅ ' + t('sort.value')}</button>`).join('')}</div></div>`;
   $('#stage').innerHTML = S.staged.map((grp, i) => {
     const m = validateMeld(grp.map(cardById));
     return `<div class="group ${m && isCleanRun(m) ? 'clean' : ''}">${(m ? m.cards : grp.map(cardById)).map(c => cardHTML(c)).join('')}<span class="pts">${m ? m.points : 0}</span><button class="x" data-unstage="${i}">✕</button></div>`;
@@ -1111,7 +1147,10 @@ function animateEvent(ev, prev, before, fresh) {
       } else fly(ev.from === 'discard' ? cardHTML(ev.card) : '<div class="card back"></div>', src, podRect(ev.player), { cw: src && src.width });
       break;
     }
-    case 'undoDraw': sfx('discard'); break;
+    case 'undoDraw':
+      sfx(ev.penalty ? 'error' : 'discard');
+      if (ev.penalty) toast(t('t.penalty', { name: ev.player === me() ? t('you') : seatOf(ev.player).name, n: ev.penalty, why: t('n.returned') }), 'err');
+      break;
     case 'discard': {
       sfx('discard');
       const to = stack('pile-discard');
