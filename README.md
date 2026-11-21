@@ -59,7 +59,7 @@ Fel APK, Google ma y5allich el connexion men WebView: el application tab9a invit
 
 ## L'application Android (APK)
 
-`Rami-Tounsi.apk` (Android 7+, v2.8). Contre l'ordi yemchi direct bla internet. Fih micro (vocal w tsajjel el klem), ikhtiar mousi9a men telifounek, w voix arabe (synthèse Android).
+`Rami-Tounsi.apk` (Android 7+, v3.0). Contre l'ordi yemchi direct bla internet. Fih micro (vocal w tsajjel el klem), ikhtiar mousi9a men telifounek, w voix arabe (synthèse Android).
 Lel online: ftah ⚙️ Réglages fil application w 7ott adresse el serveur (el lien mta3 Render).
 Wala 7ottha marra wa7da fi `public/config.js` (`window.RAMI_SERVER = 'https://...'`) w 3awed ebni el APK:
 

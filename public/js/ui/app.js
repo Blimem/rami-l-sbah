@@ -205,6 +205,8 @@ function onTable(m) {
   if (!S.game) return;
   const newRound = S.roundSeen !== m.table.roundNo;
   const redeal = m.event && m.event.type === 'redeal';
+  // my turn ends with a discard: drop whatever was still selected / staged
+  if (m.event && m.event.type === 'discard' && m.event.player === me()) { S.sel.clear(); S.staged = []; }
   if (newRound || redeal) {
     S.roundSeen = m.table.roundNo;
     S.order = []; S.sel.clear(); S.staged = [];
@@ -371,7 +373,7 @@ function announceOut(tb) {
     else toast(t('t.out', { name: s.name, n: tb.limit }));
   }
 }
-const matchLabel = tb => (tb.limit ? t('round.limit', { n: tb.roundNo, limit: tb.limit }) : t('round.of', { n: tb.roundNo, total: tb.rounds }));
+const matchLabel = tb => (tb.limit ? t('round.limit', { n: tb.roundNo, limit: tb.limit }) : t('round.of', { n: tb.roundNo, total: tb.rounds })) + (tb.openMin ? ' · ' + t('round.open', { n: tb.openMin }) : '');
 
 function renderSolo() {
   const box = $('#solo-form');
@@ -723,6 +725,7 @@ function renderGame() {
   renderPods();
   renderMelds();
   renderPiles();
+  renderScorebox();
   renderDecide();
   renderMe();
   renderHand();
@@ -814,12 +817,25 @@ function renderMelds() {
     return;
   }
   const fresh = S.freshMelds || new Set();
-  box.innerHTML = g.melds.map(m => {
+  // grouped by owner (seat order), each meld with its owner, kind and points
+  const seatIdx = id => { const i = S.table.seats.findIndex(x => x.id === id); return i < 0 ? 99 : i; };
+  const list = g.melds.map((m, i) => ({ m, i })).sort((a, b) => seatIdx(a.m.owner) - seatIdx(b.m.owner) || a.i - b.i).map(x => x.m);
+  box.innerHTML = list.map(m => {
     const tg = targets.get(m.id);
-    return `<div class="meld ${tg ? 'target' : ''} ${fresh.has(m.id) ? 'fresh' : ''}" data-meld="${m.id}" style="--c:${seatColor(m.owner)}" ${tg ? `data-hint="${tg.hint}" data-act="${tg.type}"` : ''} title="${esc(seatOf(m.owner).name)} · ${esc(meldName(m))}">
-      ${m.cards.map(c => cardHTML(c)).join('')}<span class="pts">${m.points}</span></div>`;
+    const cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+    const who = m.owner === me() ? cap(t('you')) : seatOf(m.owner).name;
+    return `<div class="meld ${tg ? 'target' : ''} ${fresh.has(m.id) ? 'fresh' : ''} ${m.owner === me() ? 'mine' : ''}" data-meld="${m.id}" style="--c:${seatColor(m.owner)}" ${tg ? `data-hint="${tg.hint}" data-act="${tg.type}"` : ''} title="${esc(seatOf(m.owner).name)} · ${esc(meldName(m))}">
+      <div class="mh"><span class="who"><i>${esc(seatOf(m.owner).avatar || '🃏')}</i>${esc(who)}</span><span class="kind ${m.kind}">${t('kind.' + m.kind)}</span><b>${m.points}</b></div>
+      <div class="mc">${m.cards.map(c => cardHTML(c)).join('')}</div></div>`;
   }).join('');
   S.freshMelds = null;
+}
+
+function renderScorebox() {
+  const box = $('#scorebox');
+  if (!box || !S.table) return;
+  const seats = [...S.table.seats].sort((a, b) => (a.out - b.out) || a.score - b.score);
+  box.innerHTML = `<div class="sb-h">${t('sb.title')}<span>/${S.table.limit}</span></div>${seats.map((x, i) => `<div class="sb-r ${x.id === me() ? 'me' : ''} ${x.out ? 'out' : ''}" style="--c:${seatColor(x.id)}"><span class="n">${i + 1}</span><span class="nm">${esc(x.id === me() ? t('you').charAt(0).toUpperCase() + t('you').slice(1) : x.name)}</span><b>${x.score}</b></div>`).join('')}`;
 }
 
 function renderPiles() {

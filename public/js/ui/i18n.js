@@ -419,3 +419,8 @@ Object.assign(tn, {"why.min3": "lazem 3 cartet 3al a9al", "why.jokers": "barcha 
 Object.assign(ar, {"why.min3": "يلزم 3 أوراق على الأقل", "why.jokers": "جوكر كثير (يلزم أوراق عادية أكثر)", "why.set4": "المجموعة 4 أوراق كحد أقصى", "why.sameSuit": "ورقتان من نفس اللون", "why.dupRank": "نفس الرقم مرتين في السلسلة", "why.gap": "السلسلة غير متتالية (تنقص ورقة)", "why.mixed": "يلزم نفس الرقم بألوان مختلفة أو نفس اللون متتالية"});
 Object.assign(fr, {"why.min3": "il faut au moins 3 cartes", "why.jokers": "trop de jokers (il faut plus de cartes normales)", "why.set4": "un brelan/carré fait 4 cartes maximum", "why.sameSuit": "deux cartes de la même couleur", "why.dupRank": "la même valeur deux fois dans la suite", "why.gap": "la suite n'est pas continue (il manque une carte)", "why.mixed": "il faut la même valeur (couleurs différentes) ou la même couleur qui se suit"});
 Object.assign(en, {"why.min3": "you need at least 3 cards", "why.jokers": "too many jokers (need more normal cards)", "why.set4": "a set has 4 cards at most", "why.sameSuit": "two cards of the same suit", "why.dupRank": "the same rank twice in the run", "why.gap": "the run has a gap (a card is missing)", "why.mixed": "need the same rank in different suits, or the same suit in order"});
+// table: meld headers, score box, opening threshold
+Object.assign(tn, {"kind.set": "Trio", "kind.run": "Suite", "sb.title": "Scores", "round.open": "7alla {n}"});
+Object.assign(ar, {"kind.set": "مجموعة", "kind.run": "سلسلة", "sb.title": "النقاط", "round.open": "الفتح {n}"});
+Object.assign(fr, {"kind.set": "Brelan", "kind.run": "Suite", "sb.title": "Scores", "round.open": "ouverture {n}"});
+Object.assign(en, {"kind.set": "Set", "kind.run": "Run", "sb.title": "Scores", "round.open": "opening {n}"});
